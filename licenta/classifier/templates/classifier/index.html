@@ -1,0 +1,54 @@
+{% extends 'classifier/base.html' %}
+{% load static %}
+
+{% block title %}Clasificare date - Acasă{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+<header>
+    {% include 'classifier/includes/hero.html' %}
+</header>
+
+<div class="container">
+    <p class="subtitle">Încărcați fișierul JSON care conține structura corectă de date pentru clasificarea automată. Modelul va analiza datele și va determina dacă setul de date este tipic sau atipic.</p>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2>Încărcare date</h2>
+        </div>
+        <div class="card-body">
+            <form id="upload-form" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="upload-area">
+                    <div class="file-input-container">
+                        <label class="file-input-label" for="json-file">
+                            <svg class="file-input-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <span>Trageți și plasați fișierul JSON aici sau faceți clic pentru selectare</span>
+                            <input id="json-file" class="file-input" type="file" name="json_file" accept=".json" required />
+                        </label>
+                        <div id="selected-file"></div>
+                    </div>
+                    <div class="submit-container">
+                        <button type="submit" class="btn btn-primary">Analizează datele</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="loader" id="loader"></div>
+    
+    <div class="card result-card" id="result">
+        <div class="card-body">
+            <div class="result-content" id="result-content"></div>
+            <div id="explore-btn-container" class="explore-btn-container" style="display: none; margin-top: 1rem;">
+                <a href="{% url 'explore_more' %}" class="btn btn-primary">Explorați mai mult</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

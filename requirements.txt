@@ -1,0 +1,7 @@
+django
+numpy
+scikit-learn
+requests
+pandas
+matplotlib
+django-extensions

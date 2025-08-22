@@ -1,0 +1,77 @@
+{% extends 'classifier/base.html' %}
+{% load static %}
+
+{% block title %}Sesiune: {{ session.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="mb-4">
+        <h2 class="mb-1">Sesiune: {{ session.name }}</h2>
+        <small class="text-muted">Creat la: {{ session.created_at|date:'Y-m-d H:i' }}</small>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Încărcați JSON pentru analiză</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="jsonFile" class="form-label">Selectați fișier JSON</label>
+                    <input type="file" name="json_file" id="jsonFile" accept="application/json" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-primary">Analizează</button>
+            </form>
+            {% if error %}
+                <div class="alert alert-danger mt-3">{{ error }}</div>
+            {% endif %}
+            {% if result %}
+                <div class="alert alert-success mt-3">
+                    <strong>Predicție:</strong> <span class="{% if result.label == 'Typical' %}result-typical{% else %}result-atypical{% endif %}">{% if result.label == 'Typical' %}Tipic{% else %}Atipic{% endif %}</span>
+                    <span class="text-muted">({{ result.confidence }}%)</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="dashboard-history-intro mb-4">
+      <h3>Istoricul clasificărilor în sesiune</h3>
+      <p>Istoricul clasificărilor pentru această sesiune.</p>
+    </div>
+    {% if history %}
+    <div class="dashboard-history">
+      <div class="table-responsive">
+        <table class="table table-striped mt-3">
+          <thead>
+            <tr>
+              <th>Dată</th>
+              <th>Fișier</th>
+              <th>Predicție</th>
+              <th>Încredere</th>
+              <th>Acțiune</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for record in history %}
+            <tr>
+              <td>{{ record.timestamp|date:"Y-m-d H:i" }}</td>
+              <td>{{ record.filename }}</td>
+              <td class="{% if record.prediction_label == 'Typical' %}result-typical{% else %}result-atypical{% endif %}">{% if record.prediction_label == 'Typical' %}Tipic{% else %}Atipic{% endif %}</td>
+              <td>{{ record.confidence }}%</td>
+              <td><a href="{% url 'history_explore' record.id %}" class="btn btn-sm btn-outline-primary">Vezi</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info mt-3">Nu există încă clasificări în această sesiune.</div>
+    {% endif %}
+
+    <div class="text-center">
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">← Înapoi la tablou de bord</a>
+    </div>
+</div>
+{% endblock %}

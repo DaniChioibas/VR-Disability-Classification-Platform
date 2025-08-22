@@ -1,0 +1,16 @@
+{% extends 'classifier/base.html' %}
+{% load static %}
+
+{% block title %}Sesiune pacient nouă{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Creează sesiune pacient</h2>
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Creează</button>
+        <button type="button" class="btn btn-primary" onclick='window.location.href="{% url "dashboard" %}"'>Anulează</button>
+    </form>
+</div>
+{% endblock %}

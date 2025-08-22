@@ -1,0 +1,81 @@
+{% extends 'classifier/base.html' %}
+{% load static %}
+
+{% block title %}Tablou de bord{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Bun venit, {{ request.user.username }}!</h2>
+    <p>Acesta este tabloul de bord. Aici găsiți sesiunile și istoricul dvs. general.</p>
+
+    <div class="dashboard-sessions mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Sesiunile mele de pacienți</h3>
+        <a href="{% url 'session_create' %}" class="btn btn-primary btn-sm">+ Sesiune nouă</a>
+      </div>
+      {% if sessions %}
+      <div class="sessions-container mt-4">
+        {% for s in sessions %}
+        <div class="session-item mb-3">
+          <div class="card h-100">
+            <div class="card-body d-flex flex-column justify-content-between">
+              <div>
+                <h5 class="card-title">{{ s.name }}</h5>
+                <p class="card-text text-muted">{{ s.created_at|date:"Y-m-d H:i" }}</p>
+              </div>
+              <div class="d-flex justify-content-between mt-auto">
+                <a href="{% url 'session_detail' s.id %}" class="btn btn-outline-primary btn-sm">Deschide</a>
+                <form method="post" action="{% url 'session_delete' s.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Sigur doriți să ștergeți sesiunea {{ s.name }} și toate datele sale?');">&times;</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="alert alert-secondary">Nu există încă sesiuni. Creați una pentru a organiza clasificările.</div>
+      {% endif %}
+    </div>
+
+     <div class="dashboard-history-intro mb-4">
+      <h3>Istoric general al clasificărilor</h3>
+      <p>Mai jos este istoricul clasificărilor dvs.</p>
+    </div>
+
+    {% if history %}
+    <div class="dashboard-history">
+      <div class="table-responsive">
+        <table class="table table-striped mt-3">
+          <thead>
+            <tr>
+             <th>Dată</th>
+             <th>Fișier</th>
+             <th>Predicție</th>
+             <th>Încredere</th>
+             <th>Acțiune</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for record in history %}
+            <tr>
+              <td>{{ record.timestamp|date:"Y-m-d H:i" }}</td>
+              <td>{{ record.filename }}</td>
+              <td class="{% if record.prediction_label == 'Typical' %}result-typical{% else %}result-atypical{% endif %}">
+                  {% if record.prediction_label == 'Typical' %}Tipic{% else %}Atipic{% endif %}
+              </td>
+              <td>{{ record.confidence }}%</td>
+               <td><a href="{% url 'history_explore' record.id %}" class="btn btn-sm btn-outline-primary">Vezi</a></td>
+             </tr>
+            {% endfor %}
+           </tbody>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info mt-3">Nu ați efectuat încă nicio clasificare.</div>
+    {% endif %}
+</div>
+{% endblock %}

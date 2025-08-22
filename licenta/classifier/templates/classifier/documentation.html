@@ -1,0 +1,267 @@
+{% extends 'classifier/base.html' %}
+{% load static %}
+
+{% block title %}Clasificator de date VR - Documentație{% endblock title %}
+
+{% block extra_css %}
+    {# Removed Google Fonts and style.css link as they are in base.html #}
+{% endblock extra_css %}
+
+{% block content %}
+    <div class="container documentation-container">
+        <div class="documentation-header">
+            <h1>Documentație</h1>
+            <p class="lead">Clasificator de date VR pentru copii cu dizabilități</p>
+        </div>
+        
+        <div class="card documentation-card">
+            <div class="card-body">
+                <h2>Prezentare generală</h2>
+                <p>
+                    Clasificatorul de date VR este o aplicație web care utilizează învățarea automată pentru a clasifica datele de mișcare VR
+                    ca tipice sau atipice, bazat pe poziția și orientarea capului. Această documentație oferă informații despre
+                    modul de utilizare a instrumentului și interpretarea rezultatelor.
+                </p>
+                
+                <h2>Ghid utilizare</h2>
+                <ol>
+                    <li><strong>Pregătirea datelor</strong>: Asigurați-vă că datele de mișcare VR sunt în format JSON, cu coordonate corecte pentru poziția capului și direcția înainte, conform exemplului de mai jos. <a href="#download-script-button-section"><mark>Scriptul</mark></a> va genera automat un fișier JSON compatibil.</li>
+                    <li><strong>Încărcarea fișierului</strong>: Folosiți <a href="{% url 'index' %}">Pagina principală</a> sau <a href="{% url 'batch_analysis' %}">Analiza multiplă</a> pentru a selecta și încărca fișiere JSON.</li>
+                    <li><strong>Analiză</strong>: Faceți clic pe butonul „Analizează datele” pentru a procesa fișierul.</li>
+                    <li><strong>Vizualizați rezultatele</strong>: Rezultatele clasificării apar sub formular, indicând dacă tiparul de mișcare este tipic sau atipic și nivelul de încredere.</li>
+                    <li><strong>Explorați mai mult</strong>: Pe lângă rezultatele clasificării, puteți explora datele încărcate și vizualiza grafice relevante.</li>
+                    <li><strong>Clasificare atipică</strong>: Dacă rezultatul este atipic, în pagina „Explorați mai mult” puteți continua cu un alt model care va clasifica datele într-un anumit grup de dizabilități.</li>
+                    <li><strong>Raport PDF</strong>: Este posibilă generarea și descărcarea unui raport în format PDF, care conține detalii despre rezultatul clasificărilor și graficele generate.</li>
+                </ol>
+                
+                <h2>Cerințe privind formatul datelor</h2>
+                <p>
+                    Modelul se așteaptă la fișiere JSON cu următoarea structură:
+                </p>
+                <pre><code>[
+    "id": 0,
+    "dateTime": "2024-07-17 11:30:44Z",
+    "HeadPosition": {
+        "x": 0.7639493942260742,
+        "y": 2.9113388061523439,
+        "z": 0.04299736022949219
+    },
+    "HeadRotation": {
+        "x": 24.33024024963379,
+        "y": 303.6678771972656,
+        "z": 10.905299186706543
+    },
+    "HeadForward": {
+        "x": -0.7583483457565308,
+        "y": -0.4119953513145447,
+        "z": 0.5051412582397461
+    },
+    "LeftHandPosition": {
+        "x": 1.8903369903564454,
+        "y": 3.177602767944336,
+        "z": 1.5275015830993653
+    },
+    "LeftHandRotation": {
+        "x": 16.26669692993164,
+        "y": 228.8197021484375,
+        "z": 318.969970703125
+    },
+    "LeftHandForward": {
+        "x": -0.722511887550354,
+        "y": -0.280108779668808,
+        "z": -0.6320725679397583
+    },
+    "RightHandPosition": {
+        "x": 0.6897106170654297,
+        "y": 2.775914192199707,
+        "z": 0.15169811248779298
+    },
+    "RightHandRotation": {
+        "x": 14.7200345993042,
+        "y": 12.529365539550782,
+        "z": 357.9096374511719
+    },
+    "RightHandForward": {
+        "x": 0.20981977880001069,
+        "y": -0.2540961503982544,
+        "z": 0.9441455602645874
+    }
+  ...more data points
+]</code></pre>
+                
+                <h2>Înțelegerea rezultatelor</h2>
+                <p>
+                    După procesare, clasificatorul va afișa:
+                </p>
+                <ul>
+                    <li><strong>Rezultatul clasificării</strong>: „Tipic” (T) sau „Atipic” (A)</li>
+                    <li><strong>Nivelul de încredere</strong>: Procentajul de încredere în rezultat (valorile mai mari indică o încredere mai mare)</li>
+                </ul>
+                <p>
+                    <strong>Tipic (T)</strong>: Indică tipare de mișcare care se încadrează în parametri așteptați, sugerând un comportament normal în VR.<br>
+                    <strong>Atipic (A)</strong>: Indică tipare care se abat de la parametrii așteptați, sugerând un comportament neobișnuit ce poate necesita analize suplimentare.
+                </p>
+                <p>
+                    În cazul în care clasificarea este <strong>Atipic (A)</strong>, puteți accesa pagina <strong>„Explorați mai mult”</strong> pentru a analiza în detaliu setul de date, a obține o a doua clasificare care determină apartenența la grupul <strong>Autism</strong> sau <strong>Non-autism</strong> și pentru a descărca un raport complet în format PDF.
+                </p>
+                <p>
+                    <em>Notă: Acest instrument nu este un dispozitiv de diagnostic. Rezultatele atipice oferă doar perspective și nu constituie o evaluare medicală definitivă.</em>
+                </p>
+                
+                <h2>Capacități ale modelului</h2>
+
+                <h4>Performanță modele</h4>
+                <table class="table table-bordered table-striped documentation-table">
+                    <thead class="table-header bg-primary text-white">
+                        <tr>
+                            <th>Model</th>
+                            <th>Clasă</th>
+                            <th>Precizie</th>
+                            <th>Recall</th>
+                            <th>Scor F1</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="documentation-table-td">Standard</td>
+                            <td class="documentation-table-td">Tipic</td>
+                            <td class="documentation-table-td">1.00</td>
+                            <td class="documentation-table-td">0.70</td>
+                            <td class="documentation-table-td">0.82</td>
+                        </tr>
+                        <tr>
+                            <td class="documentation-table-td">Standard</td>
+                            <td class="documentation-table-td">Atipic</td>
+                            <td class="documentation-table-td">0.62</td>
+                            <td class="documentation-table-td">1.00</td>
+                            <td class="documentation-table-td">0.77</td>
+                        </tr>
+                        <tr>
+                            <td class="documentation-table-td">Suplimentar</td>
+                            <td class="documentation-table-td">Non-Autism</td>
+                            <td class="documentation-table-td">0.83</td>
+                            <td class="documentation-table-td">0.83</td>
+                            <td class="documentation-table-td">0.83</td>
+                        </tr>
+                        <tr>
+                            <td class="documentation-table-td">Suplimentar</td>
+                            <td class="documentation-table-td">Autism</td>
+                            <td class="documentation-table-td">0.67</td>
+                            <td class="documentation-table-td">0.67</td>
+                            <td class="documentation-table-td">0.67</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Acuratețe generală Model Standard:</strong> 80%</p>
+                <p><strong>Acuratețe generală Model Suplimentar:</strong> 78%</p>
+                
+                <h2>Probleme posibile</h2>
+                <p>
+                    Dacă întâmpinați probleme cu modelul:
+                </p>
+                <ul>
+                    <li><strong>Format JSON invalid</strong>: Asigurați-vă că fișierul respectă structura de mai sus</li>
+                    <li><strong>Erori de procesare</strong>: Verificați formatarea corectă a valorilor numerice</li>
+                    <li><strong>Compatibilitate dispozitiv</strong>: APK-urile sunt testate doar pe căști Meta Oculus VR și pot fi incompatibile cu alte dispozitive</li>
+                </ul>
+            </div>
+        </div>    
+        <div class="card documentation-card">
+            <div class="card-body">
+                <h2>Integrare API</h2>
+                <p>
+                    Clasificatorul de date VR oferă endpoint-uri API RESTful pentru trimiterea datelor de mișcare VR și obținerea rezultatelor.
+                </p>
+                
+                <h4>Endpoint-uri</h4>
+                <ul>
+                    <li><strong>Model standard:</strong> <code>POST /api/predict/</code></li>
+                    <li><strong>Model suplimentar:</strong> <code>POST /api/predict-extra/</code></li>
+                </ul>
+                
+                <h4>Formatul cererii</h4>
+                <p>
+                    Ambele endpoint-uri acceptă același format: trimiteți o cerere POST cu date JSON în corpul cererii, respectând structura din secțiunea Cerințe privind formatul datelor.
+                </p>
+                
+                <h4>Exemplu cerere (Model standard)</h4>
+                <pre><code>curl -X POST \
+  http://127.0.0.1:8000/api/predict/ \
+  -H 'Content-Type: application/json' \
+  -d '[
+    {
+        "HeadPosition": {
+            "x": 0.7639493942260742,
+            "y": 2.9113388061523439,
+            "z": 0.04299736022949219
+        },
+        "HeadForward": {
+            "x": -0.7583483457565308,
+            "y": -0.4119953513145447,
+            "z": 0.5051412582397461
+        }
+    },
+    {
+        "HeadPosition": {
+            "x": 0.7689493942260742,
+            "y": 2.9213388061523439,
+            "z": 0.04399736022949219
+        },
+        "HeadForward": {
+            "x": -0.7583483457565308,
+            "y": -0.4119953513145447,
+            "z": 0.5051412582397461
+        }
+    }
+]'</code></pre>
+
+                <h4>Exemplu cerere (Model suplimentar)</h4>
+                <pre><code>curl -X POST \
+  http://127.0.0.1:8000/api/predict-extra/ \
+  -H 'Content-Type: application/json' \
+  -d '[... same JSON format as above ...]'</code></pre>
+                  <h4>Formatul răspunsului</h4>
+                <p>Ambele endpoint-uri returnează aceeași structură de răspuns:</p>
+                <pre><code>{
+    "status": "success",
+    "model_type": "standard"
+    "prediction": 0,
+    "prediction_label": "Typical",
+    "confidence": 95.7
+}</code></pre>
+sau
+                <pre><code>{
+    "status": "success",
+    "model_type": "extra"
+    "prediction": 0,
+    "prediction_label": "Non-Autism",
+    "confidence": 80.5
+}</code></pre>
+                
+                <h4>Răspunsuri de eroare</h4>
+                <p>
+                    API-ul va returna coduri de stare HTTP și mesaje de eroare adecvate în caz de eroare:
+                </p>
+                <ul>
+                    <li><strong>400 Cerere incorectă</strong> - Format JSON invalid sau date necesare lipsă</li>
+                    <li><strong>405 Metodă nepermisă</strong> - Metoda cererii diferită de POST</li>
+                    <li><strong>500 Eroare internă a serverului</strong> - Erori de procesare pe server</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card documentation-card">
+            <div class="card-body">
+                <h2>Descărcați scriptul</h2>
+                <p>
+                    Utilizați aplicația VR Serious Game + script în format APK pentru a captura date detaliate despre mișcarea capului în sesiunea VR și a le exporta ca fișiere JSON compatibile cu modelul. Fișierele APK sunt destinate instalării pe un căști de realitate virtuală și includ trei jocuri serioase distincte. Fiecare joc oferă o scenă unică care înregistrează automat mișcarea și orientarea capului și brațelor. După încheierea sesiunii, datele sunt salvate și pregătite pentru analiză. Faceți clic pe butonul „Descarcă scriptul” pentru a începe.
+                </p>
+                <a href="{% url 'download_script' %}" class="btn btn-primary" id="download-script-button-section">Descarcă scriptul</a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block extra_js %}
+    <script src="{% static 'classifier/js/main.js' %}"></script>
+{% endblock extra_js %}

@@ -1,0 +1,348 @@
+{% extends 'classifier/base.html' %}
+{% load static %}
+
+{% block title %}Explorați mai mult - Clasificator de date VR{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+<div id="report-content" class="container">
+<div class="container">
+    <div class="mb-4">
+        <h2>Explorați clasificarea datelor</h2>
+        <p class="text-muted">Vizualizare detaliată a datelor JSON încărcate și a rezultatelor clasificării.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2>Clasificare inițială</h2>
+                </div>
+                <div class="card-body">
+
+                    {% if prediction_label and confidence is not None %}
+                        <div class="classification-result-card {% if prediction_label == 'Typical' %}result-typical{% else %}result-atypical{% endif %}">
+                            {% if prediction_label == 'Typical' %}
+                                <svg class="result-icon-explore" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="9" stroke-width="2"/>
+                                    <text x="12" y="16" text-anchor="middle" font-size="12" font-weight="bold" stroke="none" fill="currentColor">T</text>
+                                </svg>
+                                <h3 class="result-typical">Tipic</h3>
+                            {% else %}
+                                <svg class="result-icon-explore" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="9" stroke-width="2"/>
+                                    <text x="12" y="16" text-anchor="middle" font-size="12" font-weight="bold" stroke="none" fill="currentColor">A</text>
+                                </svg>
+                                <h3 class="result-atypical">Atipic</h3>
+                            {% endif %}
+                            <p><strong>Predicție:</strong> {% if prediction_label == 'Typical' %}Tipic{% else %}Atipic{% endif %}</p>
+                            <p><strong>Încredere:</strong> {{ confidence|floatformat:2 }}%</p>
+                            <div class="confidence-meter-explore">
+                                <div class="confidence-fill-explore {% if prediction_label == 'Typical' %}result-typical{% else %}result-atypical{% endif %}" style="width: {{ confidence }}%;"></div>
+                            </div>
+                        
+                        </div>
+                        <p class="text-muted mb-3">Modelul inițial clasifică datele pentru a determina dacă tiparul de mișcare este tipic (T) sau atipic (A) folosind un algoritm Random Forest.</p>
+                        
+                        {% if show_secondary_classify_button %}
+                            <form method="post" action="{% url 'explore_more' %}" class="mt-3 text-center">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">Clasifică mai departe (Atipic)</button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <p>Initial classification data is not available. Please <a href="{% url 'index' %}">analyze a file</a> first.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            {% if secondary_prediction_label and secondary_confidence is not None %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2>Rezultate clasificare secundară</h2>
+                </div>
+                <div class="card-body">
+                    <div class="classification-result-card 
+                        {% if secondary_prediction_label == 'Autism' %}result-autism
+                        {% elif secondary_prediction_label == 'Non-autism disability' %}result-non-autism-disability
+                        {% endif %}">
+                        {% if secondary_prediction_label == 'Autism' %}
+                            <svg class="result-icon-explore" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <circle cx="12" cy="12" r="9" stroke-width="2"/>
+                                <text x="12" y="16" text-anchor="middle" font-size="12" font-weight="bold" stroke="none" fill="currentColor">A</text>
+                            </svg>
+                            <h3 class="result-autism">{{ secondary_prediction_label }}</h3>
+                        {% elif secondary_prediction_label == 'Non-autism disability' %}
+                            <svg class="result-icon-explore" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <circle cx="12" cy="12" r="9" stroke-width="2"/>
+                                <text x="12" y="16" text-anchor="middle" font-size="12" font-weight="bold" stroke="none" fill="currentColor">N</text>
+                            </svg>
+                            <h3 class="result-non-autism-disability">Non-autism</h3>
+                        {% endif %}
+                        <p><strong>Încredere:</strong> {{ secondary_confidence|floatformat:2 }}%</p>
+                        <div class="confidence-meter-explore">
+                            <div class="confidence-fill-explore 
+                                {% if secondary_prediction_label == 'Autism' %}result-autism
+                                {% elif secondary_prediction_label == 'Non-autism disability' %}result-non-autism-disability
+                                {% endif %}" 
+                                style="width: {{ secondary_confidence }}%;"></div>
+                        </div>
+                         
+                    </div>
+                    <p class="mt-3 text-muted">Modelul secundar clasifică în două grupuri: grupul de persoane care, conform modelului, apar a fi în spectrul autism și grupul non-autism care include ADHD, Epilepsie, Sindrom Down și Dizabilități Intelectuale.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if secondary_classification_error %}
+        <div class="alert alert-danger mt-3" role="alert">
+            <strong>Secondary Classification Error:</strong> {{ secondary_classification_error }}
+        </div>
+    {% endif %}
+
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2>Fișierul JSON</h2>
+            <button id="toggle-json-data" class="btn btn-primary btn-sm">Afișează date</button>
+        </div>
+        <div class="card-body">
+            <div id="json-data-content" style="display: none;">
+                {% if json_data %}
+                    <pre><code class="language-json">{{ json_data }}</code></pre>
+                {% else %}
+                    <p>Nu s-au găsit date JSON în sesiune sau format nevalid.</p>
+                    <p>Vă rugăm să încărcați și să analizați din nou un fișier de pe <a href="{% url 'index' %}">pagina principală</a>.</p>
+                {% endif %}
+            </div>
+            {% if data_stats %}
+            <div class="row text-center gy-3 mt-4">
+              <div class="col-6 col-md-3">
+                <div class="card shadow-sm">
+                  <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Prima înregistrare</h6>
+                    <p class="card-text fw-bold">{{ data_stats.first_recorded }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="card shadow-sm">
+                  <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Ultima înregistrare</h6>
+                    <p class="card-text fw-bold">{{ data_stats.last_recorded }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="card shadow-sm">
+                  <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Eșantioane</h6>
+                    <p class="card-text fw-bold">{{ data_stats.sample_count }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="card shadow-sm">
+                  <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Durată</h6>
+                    <p class="card-text fw-bold">{{ data_stats.duration }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if raw_json_list %}
+    <div class="card mb-4">
+      <div class="card-header">
+        <h2>Vizualizare date</h2>
+      </div>
+      <div class="card-body">
+        <div class="d-flex justify-content-center mb-3">
+          <button id="btn-headpos" class="btn btn-primary me-2">Poziția jucatorului 2D</button>
+          <button id="btn-headfd" class="btn btn-outline-primary me-2">Privirea jucatorului 2D</button>
+          <button id="btn-head3dpos" class="btn btn-outline-primary me-2">Poziția jucatorului 3D</button>
+          <button id="btn-head3d" class="btn btn-outline-primary">Privirea jucatorului 3D</button>
+        </div>
+        <canvas id="dataChart" width="1200" height="400" style="max-width: 100%; height: 200px;"></canvas>
+        <div id="plot3d" style="display:none; width:100%; height:400px;"></div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="mt-4 text-center">
+        <a id="btn-download-pdf" href="#" class="btn btn-primary me-2">Descarcă raport PDF</a>
+        <a href="{% url 'index' %}" class="btn btn-primary">← Înapoi</a>
+    </div>
+</div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleJsonBtn = document.getElementById('toggle-json-data');
+        const jsonContent = document.getElementById('json-data-content');
+        toggleJsonBtn?.addEventListener('click', function() {
+            if (jsonContent.style.display === 'none') {
+                jsonContent.style.display = 'block';
+                this.textContent = 'Ascunde Date';
+            } else {
+                jsonContent.style.display = 'none';
+                this.textContent = 'Afișează Date';
+            }
+        });
+            const downloadBtn = document.getElementById('btn-download-pdf');
+            downloadBtn?.addEventListener('click', async function() {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const filename = "{{ filename }}";
+                const pred = "{{ prediction_label }}";
+                const conf = "{{ confidence|floatformat:2 }}%";
+                const secPred = "{{ secondary_prediction_label|default:'N/A' }}";
+                const secConf = "{{ secondary_confidence|default:0|floatformat:2 }}%";
+                const stats = {
+                    first: "{{ data_stats.first_recorded }}",
+                    last: "{{ data_stats.last_recorded }}",
+                    samples: "{{ data_stats.sample_count }}",
+                    duration: "{{ data_stats.duration }}"
+                };
+                pdf.setFontSize(16);
+                pdf.text('VR Data Classifier Report', 14, 20);
+                pdf.setFontSize(12);
+                pdf.text(`File: ${filename}`, 14, 28);
+                pdf.text(`Initial Prediction: ${pred} (${conf})`, 14, 34);
+                if (secPred !== 'N/A') pdf.text(`Secondary Prediction: ${secPred} (${secConf})`, 14, 40);
+                pdf.text(`First Recorded: ${stats.first}`, 14, 50);
+                pdf.text(`Last Recorded: ${stats.last}`, 14, 56);
+                pdf.text(`Samples: ${stats.samples}`, 14, 62);
+                pdf.text(`Duration: ${stats.duration}`, 14, 68);
+                chart.data.datasets = getDataset('HeadPosition'); chart.update();
+                const hpCanvas = document.getElementById('dataChart');
+                const imgHP2D = hpCanvas.toDataURL('image/png', 1.0);
+                pdf.addImage(imgHP2D, 'PNG', 10, 74, 190, 60);
+                chart.data.datasets = getDataset('HeadForward'); chart.update();
+                const imgHF2D = hpCanvas.toDataURL('image/png', 1.0);
+                pdf.addImage(imgHF2D, 'PNG', 10, 140, 190, 60);
+                pdf.addPage();
+                const xsPos = rawData.map(d => d.HeadPosition?.x || 0);
+                const ysPos = rawData.map(d => d.HeadPosition?.y || 0);
+                const zsPos = rawData.map(d => d.HeadPosition?.z || 0);
+                const traceHP3 = { x: xsPos, y: ysPos, z: zsPos, mode: 'lines', type: 'scatter3d', line: { width: 4, color: '#ef553b' } };
+                const layoutHP3 = { margin: {l:0,r:0,b:0,t:30}, scene: { xaxis:{title:'X'}, yaxis:{title:'Y'}, zaxis:{title:'Z'} }, title: 'Head Position 3D' };
+                await Plotly.newPlot('plot3d', [traceHP3], layoutHP3, {responsive: false});
+                const imgHP3 = await Plotly.toImage('plot3d', {format:'png', width:800, height:500});
+                pdf.addImage(imgHP3, 'PNG', 10, 20, 190, 110);
+                const xsFwd = rawData.map(d => d.HeadForward?.x || 0);
+                const ysFwd = rawData.map(d => d.HeadForward?.y || 0);
+                const zsFwd = rawData.map(d => d.HeadForward?.z || 0);
+                const traceHF3 = { x: xsFwd, y: ysFwd, z: zsFwd, mode: 'lines', type: 'scatter3d', line: { width: 4, color: '#636efa' } };
+                const layoutHF3 = { margin: {l:0,r:0,b:0,t:30}, scene: { xaxis:{title:'X'}, yaxis:{title:'Y'}, zaxis:{title:'Z'} }, title: 'Head Forward 3D' };
+                await Plotly.newPlot('plot3d', [traceHF3], layoutHF3, {responsive: false});
+                const imgHF3 = await Plotly.toImage('plot3d', {format:'png', width:800, height:500});
+                pdf.addImage(imgHF3, 'PNG', 10, 130, 190, 110);
+                pdf.save('full_report.pdf');
+            });
+         
+        const rawData = JSON.parse('{{ raw_json_list|escapejs }}' || '[]');
+        if (!Array.isArray(rawData) || !rawData.length) return;
+        const labels = rawData.map((_, i) => i + 1);
+        const ctx = document.getElementById('dataChart').getContext('2d');
+        let currentKey = 'HeadPosition';
+        function getDataset(key) {
+          return [
+            { label: key + ' X', data: rawData.map(d => d[key]?.x || 0), borderColor: '#f87171', fill: false },
+            { label: key + ' Y', data: rawData.map(d => d[key]?.y || 0), borderColor: '#60a5fa', fill: false },
+            { label: key + ' Z', data: rawData.map(d => d[key]?.z || 0), borderColor: '#34d399', fill: false }
+          ];
+        }
+        const chart = new Chart(ctx, {
+          type: 'line',
+          data: { labels: labels, datasets: getDataset(currentKey) },
+          options: {
+            responsive: true,
+            plugins: {
+              title: { display: true, text: currentKey + ' Over Samples' },
+              legend: { position: 'bottom' }
+            },
+            scales: {
+              x: { display: true, title: { display: true, text: 'Sample #' } },
+              y: { display: true, title: { display: true, text: 'Value' } }
+            }
+          }
+        });
+        document.getElementById('btn-headpos').addEventListener('click', function() {
+          document.getElementById('plot3d').style.display = 'none';
+          document.getElementById('dataChart').style.display = 'block';
+           currentKey = 'HeadPosition';
+           this.classList.replace('btn-outline-primary', 'btn-primary');
+           document.getElementById('btn-headfd').classList.replace('btn-primary', 'btn-outline-primary');
+           document.getElementById('btn-head3d').classList.replace('btn-primary', 'btn-outline-primary');
+           document.getElementById('btn-head3dpos').classList.replace('btn-primary', 'btn-outline-primary');
+           chart.data.datasets = getDataset(currentKey);
+           chart.options.plugins.title.text = currentKey + ' Over Samples';
+           chart.update();
+         });
+         document.getElementById('btn-headfd').addEventListener('click', function() {
+          document.getElementById('plot3d').style.display = 'none';
+          document.getElementById('dataChart').style.display = 'block';
+           currentKey = 'HeadForward';
+           this.classList.replace('btn-outline-primary', 'btn-primary');
+           document.getElementById('btn-headpos').classList.replace('btn-primary', 'btn-outline-primary');
+           document.getElementById('btn-head3d').classList.replace('btn-primary', 'btn-outline-primary');
+           document.getElementById('btn-head3dpos').classList.replace('btn-primary', 'btn-outline-primary');
+           chart.data.datasets = getDataset(currentKey);
+           chart.options.plugins.title.text = currentKey + ' Over Samples';
+           chart.update();
+         });
+        document.getElementById('btn-head3d').addEventListener('click', function() {
+          document.getElementById('dataChart').style.display = 'none';
+          document.getElementById('plot3d').style.display = 'block';
+          this.classList.replace('btn-outline-primary', 'btn-primary');
+          document.getElementById('btn-headpos').classList.replace('btn-primary', 'btn-outline-primary');
+          document.getElementById('btn-headfd').classList.replace('btn-primary', 'btn-outline-primary');
+          document.getElementById('btn-head3dpos').classList.replace('btn-primary', 'btn-outline-primary');
+          const xs = rawData.map(d => d.HeadForward?.x || 0);
+          const ys = rawData.map(d => d.HeadForward?.y || 0);
+          const zs = rawData.map(d => d.HeadForward?.z || 0);
+          const trace = {
+            x: xs, y: ys, z: zs,
+            mode: 'lines', type: 'scatter3d',
+            line: { width: 4, color: '#636efa' }
+          };
+          const layout = {
+            margin: { l:0, r:0, b:0, t:30 },
+            scene: {
+              xaxis: { title: 'X' }, yaxis: { title: 'Y' }, zaxis: { title: 'Z' }
+            }, title: 'Head Forward 3D Motion'
+          };
+          Plotly.newPlot('plot3d', [trace], layout, {responsive: true});
+        });
+        document.getElementById('btn-head3dpos').addEventListener('click', function() {
+          document.getElementById('dataChart').style.display = 'none';
+          document.getElementById('plot3d').style.display = 'block';
+          this.classList.replace('btn-outline-primary', 'btn-primary');
+          document.getElementById('btn-headpos').classList.replace('btn-primary', 'btn-outline-primary');
+          document.getElementById('btn-headfd').classList.replace('btn-primary', 'btn-outline-primary');
+          document.getElementById('btn-head3d').classList.replace('btn-primary', 'btn-outline-primary');
+          const xs = rawData.map(d => d.HeadPosition?.x || 0);
+          const ys = rawData.map(d => d.HeadPosition?.y || 0);
+          const zs = rawData.map(d => d.HeadPosition?.z || 0);
+          const trace3 = { x: xs, y: ys, z: zs, mode: 'lines', type: 'scatter3d', line: { width: 4, color: '#ef553b' } };
+          const layout3 = { margin: {l:0,r:0,b:0,t:30}, scene: { xaxis:{title:'X'}, yaxis:{title:'Y'}, zaxis:{title:'Z'} }, title: 'Head Position 3D Motion' };
+          Plotly.newPlot('plot3d', [trace3], layout3, {responsive: true});
+        });
+    });
+</script>
+{% endblock %}

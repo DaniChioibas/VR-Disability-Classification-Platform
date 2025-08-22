@@ -1,0 +1,116 @@
+{% extends "classifier/base.html" %}
+{% load static %}
+
+{% block title %}Analiză în lot - Clasificator de date VR{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Analiză fișiere în lot</h2>
+    <p class="text-center text-muted mb-4">Încărcați multiple fișiere JSON pentru clasificare.</p>
+
+    <div class="card"> 
+        <div class="card-header"> 
+            <h2>Încărcare date</h2> 
+        </div>
+        <div class="card-body">
+            <form id="batch-upload-form" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="upload-area"> 
+                    <div class="file-input-container"> 
+                        <label class="file-input-label" for="json-files-batch"> 
+                            <svg class="file-input-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <span>Trageți și plasați fișierele JSON aici sau faceți clic pentru selectare</span> 
+                            <input id="json-files-batch" class="file-input" type="file" name="json_files_batch" multiple required /> 
+                        </label>
+                        <div id="selected-files-batch-display" class="mt-2"></div> 
+                    </div>
+                    <div class="submit-container"> 
+                        <button type="submit" class="btn btn-primary">Analizează fișierele</button> 
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="batch-loader" class="text-center my-4" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Se încarcă...</span>
+        </div>
+        <p>Se procesează fișierele, vă rugăm așteptați...</p>
+    </div>
+
+    {% if results %}
+    <div id="batch-results-container" class="mt-5">
+        <h3 class="mb-3">Rezultatele analizei:</h3>
+        {% for result in results %}
+        <div class="card result-card result-card-batch active mb-3 shadow-sm">
+            <div class="card-header">
+                <strong>Fișier: {{ result.filename }}</strong>
+            </div>
+            <div class="card-body">
+                {% if result.error %}
+                <div class="alert alert-danger" role="alert">
+                    Error: {{ result.error }}
+                </div>
+                {% else %}
+                <div class="result-content">
+                    <svg class="result-icon {% if result.prediction_label == 'Atypical' %}result-atypical{% else %}result-typical{% endif %}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <circle cx="12" cy="12" r="9" stroke-width="2"/>
+                        <text x="12" y="16" text-anchor="middle" font-size="12" font-weight="bold" stroke="none" fill="currentColor">{% if result.prediction_label == 'Atypical' %}A{% else %}T{% endif %}</text>
+                    </svg>
+                    {% if result.prediction_label == 'Atypical' %}
+                        <div class="result-label result-atypical">Atipic</div>
+                    {% else %}
+                        <div class="result-label result-typical">Tipic</div>
+                    {% endif %}
+                    <p>Datele de mișcare din <strong>{{ result.filename }}</strong> au fost clasificate ca {% if result.prediction_label == 'Atypical' %}atipic{% else %}tipic{% endif %}.</p>
+                    <div class="confidence-meter">
+                        <div class="confidence-bar">
+                            <div class="confidence-fill {% if result.prediction_label == 'Atypical' %}result-atypical{% else %}result-typical{% endif %}" style="width: {{ result.confidence }}%"></div>
+                        </div>
+                        <div class="confidence-text">
+                            Încredere: {{ result.confidence }}%
+                            <span class="info-icon-container">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="info-icon">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                </svg>
+                                <span class="tooltip-text">Acest scor de încredere reflectă certitudinea modelului bazată pe datele de antrenament și nu este un instrument de diagnostic.</span>
+                            </span>
+                        </div>
+                    </div>
+                    {% if result.prediction_label == 'Atypical' and result.features_json %}
+                    <form method="post" action="{% url 'batch_explore' %}" class="explore-btn-container" style="margin-top:1rem; text-align:center;">
+                        {% csrf_token %}
+                        <input type="hidden" name="features" value="{{ result.features_json|escape }}">
+                        <input type="hidden" name="raw_json_content" value="{{ result.raw_json_content_json|escape }}">
+                        <input type="hidden" name="filename" value="{{ result.filename }}">
+                        <input type="hidden" name="prediction_label" value="{{ result.prediction_label }}">
+                        <input type="hidden" name="confidence" value="{{ result.confidence }}">
+                        <button type="submit" class="btn btn-primary">Explorați mai mult</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% elif request.method == "POST" and not results and not form_errors %} 
+    <div class="alert alert-warning mt-4" role="alert">
+        Nu au fost procesate fișiere sau fișierele încărcate nu conțin date valide.
+    </div>
+    {% endif %}
+
+    {% if form_errors %}
+    <div class="alert alert-danger mt-4" role="alert">
+        <strong>Eroare:</strong> {{ form_errors }}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'classifier/js/batch_upload.js' %}"></script>
+{% endblock %}

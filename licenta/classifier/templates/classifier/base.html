@@ -1,0 +1,25 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Clasificator de date VR{% endblock %}</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="{% static 'classifier/css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% include 'classifier/includes/navbar.html' %}
+    
+    <main class="main-content">
+        {% block content %}
+        {% endblock %}
+    </main>
+    
+    {% include 'classifier/includes/footer.html' %}
+    
+    <script src="{% static 'classifier/js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
